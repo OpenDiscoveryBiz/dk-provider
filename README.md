@@ -4,5 +4,3 @@ This specific example of a national/regional Business Service Provider should ul
 The DK Business Service Provider is one of several components needed to enable Distributed Business Service Discovery scenarios.
 
 These components are currently under initial development and we welcome collaboration on the further development of scope and principles (Contact: [Henrik Biering](mailto:hb@peercraft.com)) as well as the technical implementation (Contact: [Casper Biering](mailto:cb@peercraft.com)).
-
-Please refer to the 'devel' branch until a properly working version of the code is available.
