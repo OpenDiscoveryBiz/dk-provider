@@ -135,6 +135,8 @@ class OpenDiscoveryController extends Controller
             'SLETTET' => ['Slettet', 'Deleted'],
             'OPLØST EFTER FUSION' => ['Opløst efter fusion', 'Dissolved after merger'],
             'OPLØST EFTER SPALTNING' => ['Opløst efter spaltning', 'Dissolved after demerger'],
+            'Aktiv' => ['Aktiv', 'Active'],
+            'Ophørt' => ['Ophørt', 'Closed down'],
         ];
 
         $statusTimeline = [];
@@ -160,6 +162,27 @@ class OpenDiscoveryController extends Controller
                 'value' => $translated[0],
                 'translated' => $translated[1],
             ];
+        }
+
+        if (empty($status)) {
+            $erst_livsforloeb = $this->getErstLast($erst['livsforloeb']);
+            if (!empty($erst_livsforloeb)) {
+                $translated = $translate['Aktiv'];
+                $statusTimeline[] = [
+                    'date' => $erst_livsforloeb['periode']['gyldigFra'],
+                    'value' => $translated[0],
+                    'translated' => $translated[1],
+                ];
+
+                if (!empty($erst_livsforloeb['periode']['gyldigTil'])) {
+                    $translated = $translate['Ophørt'];
+                    $statusTimeline[] = [
+                        'date' => $erst_livsforloeb['periode']['gyldigTil'],
+                        'value' => $translated[0],
+                        'translated' => $translated[1],
+                    ];
+                }
+            }
         }
 
         $company['dkStatusTimeline'] = $statusTimeline;
@@ -359,5 +382,18 @@ class OpenDiscoveryController extends Controller
         }
 
         return false;
+    }
+
+    protected function getErstLast($array)
+    {
+        if (empty($array)) {
+            return false;
+        }
+
+        if (!array_key_exists('periode', $array[0])) {
+            throw new \InvalidArgumentException("The array needs items with the period param");
+        }
+
+        return end($array);
     }
 }
