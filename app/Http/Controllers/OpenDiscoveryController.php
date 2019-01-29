@@ -327,13 +327,19 @@ class OpenDiscoveryController extends Controller
             'auth' => [env('ERST_CVR_USER'), env('ERST_CVR_PASS')],
         ]);
 
-        $response = $client->request("POST", "http://distribution-legacy.virk.dk/cvr-permanent/_search", [
+        $response = $client->request("POST", "http://distribution.virk.dk/cvr-permanent/virksomhed/_search", [
             'json' => [
                 'from' => 0,
                 'size' => 1,
                 'query' => [
-                    'term' => [
-                        'cvrNummer' => $localId,
+                    'bool' => [
+                       'must' => [
+                            [
+                                'term' => [
+                                    'Vrvirksomhed.cvrNummer' => $localId,
+                                ],
+                            ],
+                        ],
                     ],
                 ],
             ],
