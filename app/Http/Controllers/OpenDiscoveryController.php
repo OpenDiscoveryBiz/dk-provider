@@ -197,6 +197,19 @@ class OpenDiscoveryController extends Controller
 
     protected function translateDkEmployees(&$company, &$erst)
     {
+        $nym = $erst['virksomhedMetadata']['nyesteErstMaanedsbeskaeftigelse'];
+        if(!empty($nym)) {
+            $employees = [
+                'date' => $nym['aar']."-".$nym['maaned'],
+                'from' => (int) $nym['antalAnsatte'],
+                'to' => (int) $nym['antalAnsatte'],
+            ];
+
+            $company['dkEmployees'] = $employees;
+
+            return;
+        }
+
         $nym = $erst['virksomhedMetadata']['nyesteMaanedsbeskaeftigelse'];
         if(empty($nym)) {
             return;
