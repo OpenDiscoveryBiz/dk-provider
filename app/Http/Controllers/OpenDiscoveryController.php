@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use GuzzleHttp\Client;
-use GuzzleHttp\json_decode;
-use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Psr7\Uri;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class OpenDiscoveryController extends Controller
 {
@@ -86,7 +85,7 @@ class OpenDiscoveryController extends Controller
         $company = [
             'type' => 'official',
             'id' => $country.$localId,
-            'ttl' => (int) env('DK_TTL'),
+            'ttl' => config('opendiscovery.dk_ttl'),
             'voluntaryProviders' => [],
         ];
 
@@ -197,8 +196,8 @@ class OpenDiscoveryController extends Controller
 
     protected function translateDkEmployees(&$company, &$erst)
     {
-        $nym = $erst['virksomhedMetadata']['nyesteErstMaanedsbeskaeftigelse'];
-        if(!empty($nym)) {
+        $nym = $erst['virksomhedMetadata']['nyesteErstMaanedsbeskaeftigelse'] ?? null;
+        if (! empty($nym)) {
             $employees = [
                 'date' => $nym['aar']."-".$nym['maaned'],
                 'from' => (int) $nym['antalAnsatte'],
@@ -210,8 +209,8 @@ class OpenDiscoveryController extends Controller
             return;
         }
 
-        $nym = $erst['virksomhedMetadata']['nyesteMaanedsbeskaeftigelse'];
-        if(empty($nym)) {
+        $nym = $erst['virksomhedMetadata']['nyesteMaanedsbeskaeftigelse'] ?? null;
+        if (empty($nym)) {
             return;
         }
 
@@ -329,24 +328,19 @@ class OpenDiscoveryController extends Controller
         $localId = (int) $localId;
 
         $cached = Cache::get('erstData_'.$localId);
-        if ($cached !== NULL) {
+        if ($cached !== null) {
             return $cached;
         }
 
-        $client = new Client([
-            'timeout' => 5,
-            'connect_timeout' => 5,
-            'read_timeout' => 5,
-            'auth' => [env('ERST_CVR_USER'), env('ERST_CVR_PASS')],
-        ]);
-
-        $response = $client->request("POST", "http://distribution.virk.dk/cvr-permanent/virksomhed/_search", [
-            'json' => [
+        $response = Http::withBasicAuth(config('opendiscovery.erst_cvr_user'), config('opendiscovery.erst_cvr_pass'))
+            ->timeout(5)
+            ->withOptions(['allow_redirects' => false])
+            ->post('http://distribution.virk.dk/cvr-permanent/virksomhed/_search', [
                 'from' => 0,
                 'size' => 1,
                 'query' => [
                     'bool' => [
-                       'must' => [
+                        'must' => [
                             [
                                 'term' => [
                                     'Vrvirksomhed.cvrNummer' => $localId,
@@ -355,13 +349,11 @@ class OpenDiscoveryController extends Controller
                         ],
                     ],
                 ],
-            ],
-            'allow_redirects' => false,
-        ]);
+            ]);
 
-        $jsonString = (string) $response->getBody();
+        $response->throw();
 
-        $json = json_decode($jsonString, true);
+        $json = $response->json();
 
         if ($json['hits']['total'] === 0) {
             Cache::put('erstData_'.$localId, false, 60);
