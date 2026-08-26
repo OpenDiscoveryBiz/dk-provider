@@ -1,9 +1,5 @@
 x-tmpfs: &tmpfs
-  - /tmp:mode=1777,uid=10001,gid=10001
-  - /data:mode=1777,uid=10001,gid=10001
-  - /config:mode=1777,uid=10001,gid=10001
-  - /app/storage:mode=1777,uid=10001,gid=10001
-  - /app/bootstrap/cache:mode=1777,uid=10001,gid=10001
+  - /tmp:mode=0770,uid=10001,gid=10001
 
 services:
   dk-provider:
@@ -23,10 +19,12 @@ services:
       ERST_CVR_USER: ${ERST_CVR_USER:-}
       ERST_CVR_PASS: ${ERST_CVR_PASS:-}
       LOG_CHANNEL: stderr
+      CACHE_STORE: array
+      SESSION_DRIVER: array
       OCTANE_STATE_FILE: /tmp/octane-server-state.json
-      XDG_CONFIG_HOME: /config
-      XDG_DATA_HOME: /data
-      HOME: /data
+      HOME: /tmp
+      XDG_CONFIG_HOME: /tmp
+      XDG_DATA_HOME: /tmp
     tmpfs: *tmpfs
     networks:
       - opendiscovery
